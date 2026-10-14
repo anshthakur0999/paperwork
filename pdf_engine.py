@@ -32,7 +32,7 @@ HOSTED = os.environ.get("PAPERWORK_MODE") == "hosted"
 MAX_INPUT_BYTES = int(os.environ.get("PAPERWORK_MAX_UPLOAD_MB", "25" if HOSTED else "200")) * 1024 * 1024
 MAX_OUTPUT_BYTES = int(os.environ.get("PAPERWORK_MAX_OUTPUT_MB", "64" if HOSTED else "512")) * 1024 * 1024
 MAX_PAGES = 3000
-MAX_IMAGE_PIXELS = 40_000_000
+MAX_IMAGE_PIXELS = 16_000_000 if HOSTED else 40_000_000
 MAX_RENDER_PIXELS = 6_000_000 if HOSTED else 24_000_000
 MAX_TOTAL_RENDER_PIXELS = 36_000_000 if HOSTED else 180_000_000
 MAX_RENDER_PAGES = 500
@@ -345,7 +345,7 @@ def _images_to_pdf(files: list[tuple[str, bytes]], options: dict, summary: dict)
                         for frame_index in range(frame_count):
                             original.seek(frame_index)
                             if original.width * original.height > MAX_IMAGE_PIXELS:
-                                raise PDFError("An image exceeds the 40-megapixel limit. Resize it first.")
+                                raise PDFError(f"An image exceeds the {MAX_IMAGE_PIXELS // 1_000_000}-megapixel limit. Resize it first.")
                             image = ImageOps.exif_transpose(original.copy()).convert("RGBA")
                             white = Image.new("RGB", image.size, "white")
                             white.paste(image, mask=image.getchannel("A"))
@@ -388,7 +388,7 @@ def _pdf_to_images(document: fitz.Document, stem: str, options: dict, summary: d
         raise PDFError(f"Convert up to {MAX_RENDER_PAGES} pages at a time.")
     pixel_counts = [_render_pixels(document[index], scale) for index in indexes]
     if any(count > MAX_RENDER_PIXELS for count in pixel_counts):
-        raise PDFError("A rendered page would exceed 24 megapixels. Lower the DPI.")
+        raise PDFError(f"A rendered page would exceed {MAX_RENDER_PIXELS // 1_000_000} megapixels. Lower the DPI.")
     if sum(pixel_counts) > MAX_TOTAL_RENDER_PIXELS:
         raise PDFError("The selected pages would use too much memory. Select fewer pages or lower the DPI.")
     entries = []
@@ -518,7 +518,7 @@ def _extract_images(document: fitz.Document, stem: str, indexes: list[int], summ
                 skipped += 1
                 continue
             if image["width"] * image["height"] > MAX_IMAGE_PIXELS:
-                raise PDFError("An embedded image exceeds the 40-megapixel limit.")
+                raise PDFError(f"An embedded image exceeds the {MAX_IMAGE_PIXELS // 1_000_000}-megapixel limit.")
             if mask:
                 try:
                     base = fitz.Pixmap(document, xref)
@@ -684,7 +684,7 @@ def operate(tool: str, files: list[tuple[str, bytes]], options: dict) -> tuple[b
                                 continue
                             seen_images.add(image[0])
                             if image[2] * image[3] > MAX_IMAGE_PIXELS:
-                                raise PDFError("An embedded image exceeds the 40-megapixel limit. Choose lossless compression instead.")
+                                raise PDFError(f"An embedded image exceeds the {MAX_IMAGE_PIXELS // 1_000_000}-megapixel limit. Choose lossless compression instead.")
                     threshold, target, quality = (225, 150, 78) if level == "balanced" else (144, 96, 55)
                     document.rewrite_images(dpi_threshold=threshold, dpi_target=target, quality=quality,
                                             lossy=True, lossless=True, bitonal=False, color=True, gray=True)

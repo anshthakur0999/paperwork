@@ -24,11 +24,12 @@ jobs:
       - run: docker build -t paperwork-test .
       - name: Check hosted container
         run: |
-          docker run -d --name paperwork-test -p 10000:10000 -e PAPERWORK_ALLOWED_HOSTS=localhost paperwork-test
+          docker run -d --name paperwork-test --memory=512m -p 10000:10000 -e PAPERWORK_ALLOWED_HOSTS=localhost paperwork-test
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://localhost:10000/api/health; then break; fi
             sleep 2
           done
           curl --fail --silent http://localhost:10000/api/health
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://localhost:10000/api/shutdown)" = "404"
+          python tests/smoke_hosted.py http://localhost:10000
           docker logs paperwork-test

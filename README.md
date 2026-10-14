@@ -4,9 +4,11 @@ A PDF toolbox with a public web app and an offline Windows mode. All fonts, scri
 
 ## Web app
 
+**[Open Paperwork](https://paperwork-pdf.onrender.com)** · [Source on GitHub](https://github.com/anshthakur0999/paperwork)
+
 The hosted app runs on Render's free web service plan. Files are uploaded over HTTPS and processed in server memory. Documents and unfinished edits are saved only in your browser for 24 hours after the last edit. Passwords and generated results are not saved. Use the local Windows mode below when you want processing on your own computer.
 
-Hosted uploads are limited to **25 MB total per operation**, with a 64 MB output limit and smaller rendering budgets to fit the free instance. Large documents or layout-aware text extraction may exceed the free service's memory. The free instance sleeps after 15 minutes without traffic; opening it again can take about a minute. Render's free instance hours are shared across services in the workspace. See [Render's free service limits](https://render.com/docs/free).
+Hosted uploads are limited to **25 MB total per operation**, with a 64 MB output limit, 16-megapixel input images, and 6-megapixel rendered pages to fit the free instance. Large documents or layout-aware text extraction may exceed the free service's memory. The free instance sleeps after 15 minutes without traffic; opening it again can take about a minute. Render's free instance hours are shared across services in the workspace. See [Render's free service limits](https://render.com/docs/free).
 
 Pushes to `main` automatically deploy. GitHub Actions runs the Python and browser-state tests and builds/checks the hosted Docker image.
 
