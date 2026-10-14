@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!requirements.txt
+!app.py
+!pdf_engine.py
+!serve.py
+!LICENSE
+!static/
+!static/**

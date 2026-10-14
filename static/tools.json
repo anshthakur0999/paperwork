@@ -1,0 +1,140 @@
+[
+  {
+    "id": "images-to-pdf",
+    "name": "Images to PDF",
+    "category": "convert",
+    "icon": "tool-images-to-pdf",
+    "description": "Turn your images into one tidy PDF.",
+    "action": "Create PDF",
+    "accept": ".jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp,.gif",
+    "multiple": true,
+    "tip": "Drag the image previews into your preferred order. The PDF follows the order shown, from left to right, top to bottom."
+  },
+  {
+    "id": "pdf-to-images",
+    "name": "PDF to images",
+    "category": "convert",
+    "icon": "tool-pdf-to-images",
+    "description": "Save PDF pages as crisp image files.",
+    "action": "Convert to images",
+    "tip": "PNG preserves sharp edges without JPEG compression. JPG usually creates smaller files. Pages render on a white background; multiple pages are packaged in a ZIP."
+  },
+  {
+    "id": "merge",
+    "name": "Merge PDFs",
+    "category": "organize",
+    "icon": "tool-merge",
+    "description": "Bring several PDFs together in one file.",
+    "action": "Merge PDFs",
+    "multiple": true,
+    "tip": "Files are merged in the order shown. Use the arrows beside each file to change that order."
+  },
+  {
+    "id": "split",
+    "name": "Split PDF",
+    "category": "organize",
+    "icon": "tool-split",
+    "description": "Break a document into smaller PDFs.",
+    "action": "Split PDF",
+    "tip": "Create one file per page, split into equal groups, or enter custom ranges. Results are packaged in a ZIP."
+  },
+  {
+    "id": "extract",
+    "name": "Extract pages",
+    "category": "organize",
+    "icon": "tool-extract",
+    "description": "Keep just the pages you need.",
+    "action": "Extract pages",
+    "tip": "Page numbers start at 1. For example, 1,3-5 keeps the first page and pages three through five."
+  },
+  {
+    "id": "reorder",
+    "name": "Reorder pages",
+    "category": "organize",
+    "icon": "tool-reorder",
+    "description": "Drag page previews into the order you want.",
+    "action": "Reorder pages",
+    "tip": "Drag pages to arrange them, or use the arrows under each preview. The saved PDF follows the grid from left to right, top to bottom."
+  },
+  {
+    "id": "delete",
+    "name": "Delete pages",
+    "category": "organize",
+    "icon": "tool-delete",
+    "description": "Remove the pages you don’t need.",
+    "action": "Delete pages",
+    "tip": "Preview every page and click × to mark pages for removal. Use the restore arrow or Restore all to undo. At least one page must remain in the finished document."
+  },
+  {
+    "id": "rotate",
+    "name": "Rotate pages",
+    "category": "organize",
+    "icon": "tool-rotate",
+    "description": "Get every page facing the right way.",
+    "action": "Rotate pages",
+    "tip": "Rotation is clockwise and relative to each page’s current orientation."
+  },
+  {
+    "id": "compress",
+    "name": "Compress PDF",
+    "category": "optimize",
+    "icon": "tool-compress",
+    "description": "Make your PDF easier to store and share.",
+    "action": "Compress PDF",
+    "tip": "Balanced and strong compression reduce embedded image quality while preserving text. Savings depend on the source; an optimized PDF may not get smaller."
+  },
+  {
+    "id": "watermark",
+    "name": "Add watermark",
+    "category": "personalize",
+    "icon": "tool-watermark",
+    "description": "Give your document a personal stamp.",
+    "action": "Add watermark",
+    "tip": "A watermark becomes part of the page. Use English or Latin text with the built-in font."
+  },
+  {
+    "id": "page-numbers",
+    "name": "Page numbers",
+    "category": "personalize",
+    "icon": "tool-page-numbers",
+    "description": "Add a little order to your documents.",
+    "action": "Add page numbers",
+    "tip": "Numbers are added along the bottom of each selected page. Prefix and suffix text use English or Latin characters."
+  },
+  {
+    "id": "protect",
+    "name": "Protect PDF",
+    "category": "security",
+    "icon": "tool-protect",
+    "description": "Add a password and access permissions.",
+    "action": "Protect PDF",
+    "tip": "Keep your password somewhere safe. Permission restrictions depend on whether the PDF viewer respects them."
+  },
+  {
+    "id": "unlock",
+    "name": "Unlock PDF",
+    "category": "security",
+    "icon": "tool-unlock",
+    "description": "Remove a password you already know.",
+    "action": "Unlock PDF",
+    "tip": "Enter the document’s existing password below. This tool does not recover or guess forgotten passwords."
+  },
+  {
+    "id": "extract-text",
+    "name": "Extract text",
+    "category": "convert",
+    "icon": "tool-extract-text",
+    "description": "Copy text with a clean reading order.",
+    "action": "Extract text",
+    "tip": "Readable layout handles columns and tables. Markdown keeps table formatting; TXT gives plain text and JSON organizes text by page. This tool requires selectable text; scanned PDFs are not supported."
+  },
+  {
+    "id": "extract-images",
+    "name": "Extract images",
+    "category": "convert",
+    "icon": "tool-extract-images",
+    "description": "Save the images embedded in a PDF.",
+    "action": "Extract images",
+    "tip": "Saves embedded image assets in a ZIP. To export a complete page including text and graphics, use PDF to images."
+  }
+]

@@ -1,0 +1,34 @@
+name: Test and build Paperwork
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+      - run: python -m pip install -r requirements.txt httpx pytest
+      - run: python -m pytest tests -q
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: docker build -t paperwork-test .
+      - name: Check hosted container
+        run: |
+          docker run -d --name paperwork-test -p 10000:10000 -e PAPERWORK_ALLOWED_HOSTS=localhost paperwork-test
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:10000/api/health; then break; fi
+            sleep 2
+          done
+          curl --fail --silent http://localhost:10000/api/health
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://localhost:10000/api/shutdown)" = "404"
+          docker logs paperwork-test

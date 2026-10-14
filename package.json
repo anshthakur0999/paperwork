@@ -1,0 +1,10 @@
+{
+  "name": "paperwork-ui-tests",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.js"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.4"
+  }
+}
