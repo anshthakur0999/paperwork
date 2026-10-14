@@ -1,6 +1,7 @@
 """Public deployment boundaries, resource limits, and privacy messaging."""
 import json
 import re
+from xml.etree import ElementTree
 
 import pymupdf as fitz
 import pytest
@@ -62,6 +63,45 @@ def test_hosted_page_explains_uploads_and_browser_drafts(client):
 
 def test_hosted_shutdown_is_disabled(client):
     assert client.post("/api/shutdown").status_code == 404
+
+
+def test_search_metadata_verification_and_canonical_are_in_the_initial_head(client):
+    for path in ("/", "/index.html", "/static/index.html"):
+        response = client.get(path)
+        head = response.text.split("</head>")[0]
+        assert "Free Online PDF Tools" in head
+        assert '<meta name="description"' in head
+        assert '<link rel="canonical" href="https://paperwork.example/">' in head
+        assert '<meta name="google-site-verification" content="vwXE8kAhkuLpdhujuebl3A_YPzSea7Rawg5iIZIEblE">' in head
+        assert "X-Robots-Tag" not in response.headers
+    # Internal health probes must not change the published canonical hostname.
+    assert 'href="https://paperwork.example/"' in client.get("/", headers={"Host": "localhost"}).text
+    assert client.get("/api/health").headers["X-Robots-Tag"] == "noindex, nofollow"
+
+
+def test_sitemap_contains_only_the_public_homepage_and_robots_allows_assets(client):
+    robots = client.get("/robots.txt")
+    assert robots.status_code == 200
+    assert robots.headers["content-type"].startswith("text/plain")
+    assert "Allow: /\nDisallow: /api/" in robots.text
+    assert "Sitemap: https://paperwork.example/sitemap.xml" in robots.text
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    assert sitemap.headers["content-type"].startswith("application/xml")
+    urls = ElementTree.fromstring(sitemap.content).findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url")
+    assert [url[0].text for url in urls] == ["https://paperwork.example/"]
+    assert client.head("/robots.txt").status_code == 200
+    assert client.head("/sitemap.xml").status_code == 200
+
+
+def test_local_mode_has_no_public_sitemap_or_google_verification():
+    with TestClient(create_app(hosted=False)) as client:
+        page = client.get("/")
+        assert "google-site-verification" not in page.text
+        assert 'rel="canonical"' not in page.text
+        assert page.headers["X-Robots-Tag"] == "noindex, nofollow"
+        assert client.get("/robots.txt").text == "User-agent: *\nDisallow: /\n"
+        assert client.get("/sitemap.xml").status_code == 404
 
 
 @pytest.mark.parametrize("host", ["evil.example", "paperwork.example.evil.example", "paperwork.example@evil.example"])

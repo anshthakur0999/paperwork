@@ -107,7 +107,7 @@ class LocalDraftStore {
 const tools = JSON.parse(document.getElementById('tool-catalog').textContent);
 const appConfig = JSON.parse(document.getElementById('app-config')?.textContent || '{}');
 const hosted = appConfig.mode==='hosted';
-const appTitle = hosted?'Paperwork - PDF Studio':'Paperwork - Local PDF Studio';
+const appTitle = hosted?'Paperwork - Free Online PDF Tools | Merge, Split & Delete Pages':'Paperwork - Local PDF Studio';
 const $ = id => document.getElementById(id);
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

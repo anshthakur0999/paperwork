@@ -32,9 +32,12 @@ HOST_PATTERN = re.compile(r"^(127\.0\.0\.1|localhost|testserver)(:[0-9]{1,5})?$"
 ASSET_DIR = Path(__file__).parent / "static"
 CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 PUBLIC_ASSETS = {"/static/app.js": "app.js", "/static/styles.css": "styles.css", "/static/tools.json": "tools.json"}
+HOSTED_TITLE = "Paperwork - Free Online PDF Tools | Merge, Split & Delete Pages"
+GOOGLE_SITE_VERIFICATION = "vwXE8kAhkuLpdhujuebl3A_YPzSea7Rawg5iIZIEblE"
+HOSTED_DESCRIPTION = "Free online PDF tools to merge, split, compress, protect, and convert PDFs. Preview every page to delete or reorder it, with browser drafts saved for 24 hours."
 
 
-def interface_response(*, hosted: bool = False, upload_limit: int = MAX_DOCUMENT_BYTES, source_url: str = "") -> HTMLResponse:
+def interface_response(*, hosted: bool = False, upload_limit: int = MAX_DOCUMENT_BYTES, source_url: str = "", public_url: str = "") -> HTMLResponse:
     """Include the complete first view and its CSS in the initial response."""
     template = (ASSET_DIR / "index.html").read_text(encoding="utf-8")
     styles = "\n" + (ASSET_DIR / "styles.css").read_text(encoding="utf-8") + "\n"
@@ -57,7 +60,12 @@ def interface_response(*, hosted: bool = False, upload_limit: int = MAX_DOCUMENT
     page = page.replace('<div class="tool-grid" id="tool-grid"></div>', f'<div class="tool-grid" id="tool-grid">{cards}</div>')
     page = page.replace('<script src="/static/app.js" defer></script>', f'<script id="tool-catalog" type="application/json">{catalog_json}</script>\n  <script id="app-config" type="application/json">{config_json}</script>\n  <script src="/static/app.js?v={script_version}" defer></script>')
     if hosted:
-        page = page.replace("Paperwork - Local PDF Studio", "Paperwork - PDF Studio")
+        page = page.replace("Paperwork - Local PDF Studio", escape(HOSTED_TITLE))
+        metadata = f'<meta name="description" content="{escape(HOSTED_DESCRIPTION, quote=True)}">\n'
+        if public_url:
+            metadata += f'  <link rel="canonical" href="{escape(public_url, quote=True)}">\n'
+            metadata += f'  <meta name="google-site-verification" content="{GOOGLE_SITE_VERIFICATION}">\n'
+        page = page.replace("</head>", "  " + metadata + "</head>")
         page = page.replace("Local processing", "Server processing")
         page = page.replace("Files are sent only to the server on this computer.", "Files are uploaded to the PDF server for processing in memory. Saved drafts stay in this browser for 24 hours.")
         page = page.replace("PDF files · up to 200 MB total", f"PDF files · up to {upload_limit // (1024 * 1024)} MB total")
@@ -221,6 +229,9 @@ def create_app(*, hosted: bool | None = None, allowed_hosts: tuple[str, ...] | N
             raise ValueError("PAPERWORK_MAX_UPLOAD_MB must be between 1 and 200.")
         app.state.upload_limit = upload_mb * 1024 * 1024
     app.state.hosted = hosted
+    # Canonical URLs use configured hostnames, never an incoming Host header.
+    public_host = allowed_hosts[0] if hosted else ""
+    public_url = f"https://{public_host}/" if public_host and not HOST_PATTERN.fullmatch(public_host) else ""
 
     @app.middleware("http")
     async def local_only(request: Request, call_next):
@@ -252,13 +263,28 @@ def create_app(*, hosted: bool | None = None, allowed_hosts: tuple[str, ...] | N
             "Referrer-Policy": "no-referrer", "Cross-Origin-Resource-Policy": "same-origin",
         })
         response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+        if not public_url or request.url.path.startswith("/api/"):
+            response.headers["X-Robots-Tag"] = "noindex, nofollow"
         return response
 
     @app.api_route("/", methods=["GET", "HEAD"])
     @app.api_route("/index.html", methods=["GET", "HEAD"])
     @app.api_route("/static/index.html", methods=["GET", "HEAD"])
     async def interface():
-        return interface_response(hosted=hosted, upload_limit=getattr(app.state, "upload_limit", MAX_DOCUMENT_BYTES), source_url=os.environ.get("PAPERWORK_SOURCE_URL", ""))
+        return interface_response(hosted=hosted, upload_limit=getattr(app.state, "upload_limit", MAX_DOCUMENT_BYTES), source_url=os.environ.get("PAPERWORK_SOURCE_URL", ""), public_url=public_url)
+
+    @app.api_route("/robots.txt", methods=["GET", "HEAD"])
+    async def robots():
+        rules = f"User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {public_url}sitemap.xml\n" if public_url else "User-agent: *\nDisallow: /\n"
+        return Response(rules, media_type="text/plain")
+
+    @app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
+    async def sitemap():
+        if not public_url:
+            return Response(status_code=404)
+        xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        xml += f"  <url><loc>{escape(public_url)}</loc></url>\n</urlset>\n"
+        return Response(xml, media_type="application/xml")
 
     @app.exception_handler(InputError)
     @app.exception_handler(PDFError)

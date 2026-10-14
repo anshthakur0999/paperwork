@@ -23,6 +23,10 @@ docker run --rm -p 10000:10000 -e PAPERWORK_ALLOWED_HOSTS=localhost paperwork
 
 Open `http://localhost:10000`. Hosted mode disables the local shutdown endpoint, validates hostnames and request origins, and serializes PDF processing. This is a small free service; it does not provide accounts, a processing queue, or guaranteed availability.
 
+The public app serves a homepage sitemap at `/sitemap.xml`, crawl rules at `/robots.txt`, search metadata, and the Google Search Console verification tag for the repository owner's Paperwork property. The canonical URL uses the first configured public hostname. If you fork the app, replace or remove `GOOGLE_SITE_VERIFICATION` in `app.py` for your own Search Console account. The token is intended to be public. Local mode is marked `noindex` and has no public sitemap.
+
+Render's free service returns a “disallow all” robots response while asleep, before requests reach the app. This can interfere with search crawling even though the app's active crawl rules allow the homepage. See [Render's automatic robots responses](https://render.com/docs/free#automatic-robotstxt-responses). Search Console registration and sitemap submission do not guarantee indexing or ranking.
+
 ## Open the local Windows app
 
 Local mode connects to a Python app on your computer at `http://127.0.0.1:8765`. Documents stay on your computer and processing works offline after dependencies are installed.
