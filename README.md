@@ -10,7 +10,7 @@ The hosted app runs on Render's free web service plan. Files are uploaded over H
 
 Hosted uploads are limited to **25 MB total per operation**, with a 64 MB output limit, 16-megapixel input images, and 6-megapixel rendered pages to fit the free instance. Large documents or layout-aware text extraction may exceed the free service's memory. The free instance sleeps after 15 minutes without traffic; opening it again can take about a minute. Render's free instance hours are shared across services in the workspace. See [Render's free service limits](https://render.com/docs/free).
 
-Pushes to `main` automatically deploy. GitHub Actions runs the Python and browser-state tests and builds/checks the hosted Docker image.
+GitHub Actions runs the Python and browser-state tests, builds the hosted Docker image, and verifies all 15 tools in a container limited to 512 MB of memory. The current Render service uses the public repository URL, so after pushing to `main`, choose **Manual Deploy → Deploy latest commit** in the [Render dashboard](https://dashboard.render.com/web/srv-db7tqg7avr4c73dvlmcg). Render requires a connected Git provider for automatic deployments; see [deployment behavior](https://render.com/docs/deploys).
 
 To deploy your own instance, use `render.yaml` or create a Docker web service with the repository's `Dockerfile`, choose the free plan, and configure `/api/health` as the health check. Render provides `RENDER_EXTERNAL_HOSTNAME` automatically. On another host, set `PAPERWORK_ALLOWED_HOSTS` to the exact public hostname. Environment examples are in `.env.example`; Python does not load that file automatically.
 
