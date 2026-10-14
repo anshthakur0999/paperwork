@@ -4,13 +4,17 @@ A PDF toolbox with a public web app and an offline Windows mode. All fonts, scri
 
 ## Web app
 
-**[Open Paperwork](https://paperwork-pdf.onrender.com)** · [Source on GitHub](https://github.com/anshthakur0999/paperwork)
+**[Open Paperwork](https://anshthakur0999.github.io/paperwork/)** · [PDF workspace](https://paperwork-pdf.onrender.com) · [Source on GitHub](https://github.com/anshthakur0999/paperwork)
 
-The hosted app runs on Render's free web service plan. Files are uploaded over HTTPS and processed in server memory. Documents and unfinished edits are saved only in your browser for 24 hours after the last edit. Passwords and generated results are not saved. Use the local Windows mode below when you want processing on your own computer.
+The homepage is hosted on **GitHub Pages** and loads independently of the PDF server. It serves the complete tool catalog, search and category filters, search metadata, and a sitemap without needing to wake Render. Each tool opens its existing PDF workspace on **Render's free web service plan**. The server can still sleep between uses, so opening a tool may take about a minute after inactivity.
+
+Files are uploaded over HTTPS to the PDF workspace and processed in server memory. Documents and unfinished edits are saved only in your browser at the Render origin for 24 hours after the last edit. Passwords and generated results are not saved. Existing drafts remain available in the same PDF workspace. The GitHub Pages homepage does not upload files or contact the PDF server before you open a tool. Use local Windows mode below when you want processing on your own computer.
 
 Hosted uploads are limited to **25 MB total per operation**, with a 64 MB output limit, 16-megapixel input images, and 6-megapixel rendered pages to fit the free instance. Large documents or layout-aware text extraction may exceed the free service's memory. The free instance sleeps after 15 minutes without traffic; opening it again can take about a minute. Render's free instance hours are shared across services in the workspace. See [Render's free service limits](https://render.com/docs/free).
 
 GitHub Actions runs the Python and browser-state tests, builds the hosted Docker image, and verifies all 15 tools in a container limited to 512 MB of memory. The current Render service uses the public repository URL, so after pushing to `main`, choose **Manual Deploy → Deploy latest commit** in the [Render dashboard](https://dashboard.render.com/web/srv-db7tqg7avr4c73dvlmcg). Render requires a connected Git provider for automatic deployments; see [deployment behavior](https://render.com/docs/deploys).
+
+The separate **Publish Paperwork homepage** workflow automatically builds and publishes GitHub Pages on changes to its templates, builder, shared catalog, or styles. Preview it with `python scripts/build_homepage.py` followed by `python -m http.server 8786 --bind 127.0.0.1 --directory output/github-pages`. The homepage's URLs and public Search Console verification tag are in `homepage/config.json`.
 
 To deploy your own instance, use `render.yaml` or create a Docker web service with the repository's `Dockerfile`, choose the free plan, and configure `/api/health` as the health check. Render provides `RENDER_EXTERNAL_HOSTNAME` automatically. On another host, set `PAPERWORK_ALLOWED_HOSTS` to the exact public hostname. Environment examples are in `.env.example`; Python does not load that file automatically.
 
@@ -23,9 +27,11 @@ docker run --rm -p 10000:10000 -e PAPERWORK_ALLOWED_HOSTS=localhost paperwork
 
 Open `http://localhost:10000`. Hosted mode disables the local shutdown endpoint, validates hostnames and request origins, and serializes PDF processing. This is a small free service; it does not provide accounts, a processing queue, or guaranteed availability.
 
-The public app serves a homepage sitemap at `/sitemap.xml`, crawl rules at `/robots.txt`, search metadata, and the Google Search Console verification tag for the repository owner's Paperwork property. The canonical URL uses the first configured public hostname. If you fork the app, replace or remove `GOOGLE_SITE_VERIFICATION` in `app.py` for your own Search Console account. The token is intended to be public. Local mode is marked `noindex` and has no public sitemap.
+The GitHub Pages homepage serves its sitemap at `/paperwork/sitemap.xml` and has its own URL-prefix Search Console property. Google checks `robots.txt` at the domain root; a project Pages site cannot set domain-wide crawl rules using a file under `/paperwork/`. The domain currently has no root robots file, which allows crawling by default.
 
-Render's free service returns a “disallow all” robots response while asleep, before requests reach the app. This can interfere with search crawling even though the app's active crawl rules allow the homepage. See [Render's automatic robots responses](https://render.com/docs/free#automatic-robotstxt-responses). Search Console registration and sitemap submission do not guarantee indexing or ranking.
+The PDF app also serves a sitemap at `/sitemap.xml`, crawl rules at `/robots.txt`, search metadata, and its existing Search Console verification tag. Set `PAPERWORK_HOMEPAGE_URL` to the static homepage URL to declare it as the preferred canonical page. Otherwise the canonical uses the first configured public hostname. If you fork the app, replace the URLs and verification tokens in `homepage/config.json`, and replace or remove `GOOGLE_SITE_VERIFICATION` in `app.py` for your own Search Console account. Verification tokens are intended to be public. Local mode is marked `noindex` and has no public sitemap.
+
+Render's free service returns a “disallow all” robots response while asleep, before requests reach the app. Hosting the searchable homepage on GitHub Pages avoids this Render restriction for that page. See [Render's automatic robots responses](https://render.com/docs/free#automatic-robotstxt-responses). Search Console registration and sitemap submission do not guarantee indexing or ranking.
 
 ## Open the local Windows app
 

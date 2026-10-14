@@ -104,6 +104,26 @@ def test_local_mode_has_no_public_sitemap_or_google_verification():
         assert client.get("/sitemap.xml").status_code == 404
 
 
+def test_static_homepage_is_canonical_without_changing_the_document_workspace(monkeypatch):
+    monkeypatch.setenv("PAPERWORK_HOMEPAGE_URL", "https://anshthakur0999.github.io/paperwork/")
+    monkeypatch.setenv("PAPERWORK_SOURCE_URL", "https://github.com/anshthakur0999/paperwork")
+    with TestClient(create_app(hosted=True, allowed_hosts=("paperwork.example",)), base_url="https://paperwork.example") as client:
+        page = client.get("/")
+        assert '<link rel="canonical" href="https://anshthakur0999.github.io/paperwork/">' in page.text
+        assert '>Paperwork homepage</a>' in page.text
+        assert 'id="file-input"' in page.text
+        assert page.text.count('class="tool-card" data-tool=') == 15
+        assert "google-site-verification" in page.text
+        assert client.get("/api/health").status_code == 200
+
+
+@pytest.mark.parametrize("url", ["javascript:alert(1)", "http://example.com/", "https://user:secret@example.com/", "https://example.com/#fragment"])
+def test_rejects_invalid_homepage_configuration(monkeypatch, url):
+    monkeypatch.setenv("PAPERWORK_HOMEPAGE_URL", url)
+    with pytest.raises(ValueError, match="public HTTPS URL"):
+        create_app(hosted=True, allowed_hosts=("paperwork.example",))
+
+
 @pytest.mark.parametrize("host", ["evil.example", "paperwork.example.evil.example", "paperwork.example@evil.example"])
 def test_rejects_other_hosts(client, host):
     assert client.get("/api/health", headers={"Host": host}).status_code == 403

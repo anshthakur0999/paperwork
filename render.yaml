@@ -16,3 +16,5 @@ services:
         value: "64"
       - key: PAPERWORK_SOURCE_URL
         value: https://github.com/anshthakur0999/paperwork
+      - key: PAPERWORK_HOMEPAGE_URL
+        value: https://anshthakur0999.github.io/paperwork/

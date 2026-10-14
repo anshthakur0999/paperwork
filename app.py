@@ -37,7 +37,7 @@ GOOGLE_SITE_VERIFICATION = "vwXE8kAhkuLpdhujuebl3A_YPzSea7Rawg5iIZIEblE"
 HOSTED_DESCRIPTION = "Free online PDF tools to merge, split, compress, protect, and convert PDFs. Preview every page to delete or reorder it, with browser drafts saved for 24 hours."
 
 
-def interface_response(*, hosted: bool = False, upload_limit: int = MAX_DOCUMENT_BYTES, source_url: str = "", public_url: str = "") -> HTMLResponse:
+def interface_response(*, hosted: bool = False, upload_limit: int = MAX_DOCUMENT_BYTES, source_url: str = "", public_url: str = "", homepage_url: str = "") -> HTMLResponse:
     """Include the complete first view and its CSS in the initial response."""
     template = (ASSET_DIR / "index.html").read_text(encoding="utf-8")
     styles = "\n" + (ASSET_DIR / "styles.css").read_text(encoding="utf-8") + "\n"
@@ -63,14 +63,15 @@ def interface_response(*, hosted: bool = False, upload_limit: int = MAX_DOCUMENT
         page = page.replace("Paperwork - Local PDF Studio", escape(HOSTED_TITLE))
         metadata = f'<meta name="description" content="{escape(HOSTED_DESCRIPTION, quote=True)}">\n'
         if public_url:
-            metadata += f'  <link rel="canonical" href="{escape(public_url, quote=True)}">\n'
+            metadata += f'  <link rel="canonical" href="{escape(homepage_url or public_url, quote=True)}">\n'
             metadata += f'  <meta name="google-site-verification" content="{GOOGLE_SITE_VERIFICATION}">\n'
         page = page.replace("</head>", "  " + metadata + "</head>")
         page = page.replace("Local processing", "Server processing")
         page = page.replace("Files are sent only to the server on this computer.", "Files are uploaded to the PDF server for processing in memory. Saved drafts stay in this browser for 24 hours.")
         page = page.replace("PDF files · up to 200 MB total", f"PDF files · up to {upload_limit // (1024 * 1024)} MB total")
     if source_url:
-        footer = f'<footer class="source-footer"><a href="{escape(source_url, quote=True)}" target="_blank" rel="noopener noreferrer">Source code on GitHub · AGPL-3.0</a></footer>'
+        home_link = f'<a href="{escape(homepage_url, quote=True)}">Paperwork homepage</a> · ' if homepage_url and homepage_url != public_url else ""
+        footer = f'<footer class="source-footer">{home_link}<a href="{escape(source_url, quote=True)}" target="_blank" rel="noopener noreferrer">Source code on GitHub · AGPL-3.0</a></footer>'
         page = page.replace('<div class="sr-only" id="live-status"', footer + '\n  <div class="sr-only" id="live-status"')
     style_hash = base64.b64encode(hashlib.sha256(styles.encode("utf-8")).digest()).decode("ascii")
     policy = CONTENT_SECURITY_POLICY.replace("style-src 'self';", f"style-src 'self' 'sha256-{style_hash}';")
@@ -232,6 +233,11 @@ def create_app(*, hosted: bool | None = None, allowed_hosts: tuple[str, ...] | N
     # Canonical URLs use configured hostnames, never an incoming Host header.
     public_host = allowed_hosts[0] if hosted else ""
     public_url = f"https://{public_host}/" if public_host and not HOST_PATTERN.fullmatch(public_host) else ""
+    homepage_url = os.environ.get("PAPERWORK_HOMEPAGE_URL", public_url) if public_url else ""
+    if homepage_url:
+        parsed_home = urlsplit(homepage_url)
+        if parsed_home.scheme != "https" or not parsed_home.hostname or parsed_home.username or parsed_home.password or parsed_home.query or parsed_home.fragment:
+            raise ValueError("PAPERWORK_HOMEPAGE_URL must be a public HTTPS URL.")
 
     @app.middleware("http")
     async def local_only(request: Request, call_next):
@@ -271,7 +277,7 @@ def create_app(*, hosted: bool | None = None, allowed_hosts: tuple[str, ...] | N
     @app.api_route("/index.html", methods=["GET", "HEAD"])
     @app.api_route("/static/index.html", methods=["GET", "HEAD"])
     async def interface():
-        return interface_response(hosted=hosted, upload_limit=getattr(app.state, "upload_limit", MAX_DOCUMENT_BYTES), source_url=os.environ.get("PAPERWORK_SOURCE_URL", ""), public_url=public_url)
+        return interface_response(hosted=hosted, upload_limit=getattr(app.state, "upload_limit", MAX_DOCUMENT_BYTES), source_url=os.environ.get("PAPERWORK_SOURCE_URL", ""), public_url=public_url, homepage_url=homepage_url)
 
     @app.api_route("/robots.txt", methods=["GET", "HEAD"])
     async def robots():
